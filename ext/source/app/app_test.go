@@ -65,6 +65,28 @@ func TestApps(t *testing.T) {
 	}
 }
 
+func TestDescription(t *testing.T) {
+	sys := t.TempDir()
+	write(t, filepath.Join(sys, "calc.desktop"), "[Desktop Entry]\nType=Application\n"+
+		"Name=LibreOffice Calc\nGenericName=Spreadsheet\nGenericName[ja]=表計算\n"+
+		"Comment=Perform calculations\nComment[ja]=計算します。\\n二行目\n"+
+		"Keywords=Excel;xls\\;x;\nExec=libreoffice\\s--calc %U\n")
+	write(t, filepath.Join(sys, "bare.desktop"), "[Desktop Entry]\nType=Application\nName=Bare\n")
+	apps := Apps([]string{sys}, []string{"ja"}, nil)
+	if len(apps) != 2 {
+		t.Fatalf("apps: %+v", apps)
+	}
+	want := []string{"Bare", "", filepath.Join(sys, "bare.desktop")}
+	if got := apps[0].Description(); !reflect.DeepEqual(got, want) {
+		t.Errorf("bare:\n got %q\nwant %q", got, want)
+	}
+	want = []string{"LibreOffice Calc", "表計算", "計算します。", "二行目", "",
+		"Keywords: Excel, xls;x", "Exec: libreoffice --calc %U", filepath.Join(sys, "calc.desktop")}
+	if got := apps[1].Description(); !reflect.DeepEqual(got, want) {
+		t.Errorf("calc:\n got %q\nwant %q", got, want)
+	}
+}
+
 func TestLocales(t *testing.T) {
 	for _, c := range []struct {
 		env  map[string]string
@@ -110,7 +132,8 @@ func TestGather(t *testing.T) {
 	write(t, filepath.Join(home, "applications", "editor.desktop"), head+"Name=Editor\nGenericName=Text Editor\n")
 	env := map[string]string{"XDG_DATA_HOME": home, "XDG_DATA_DIRS": filepath.Join(home, "none")}
 	for goos, want := range map[string][]fi.Item{
-		"linux": {{Word: "Editor (Text Editor)", Action: file.ActionData{Path: filepath.Join(home, "applications", "editor.desktop")}}},
+		"linux": {{Word: "Editor (Text Editor)", Action: file.ActionData{Path: filepath.Join(home, "applications", "editor.desktop"),
+			Preview: []string{"Editor", "Text Editor", "", "Exec: x", filepath.Join(home, "applications", "editor.desktop")}}}},
 		// No applications directories there.
 		"windows": {},
 		"darwin":  {},

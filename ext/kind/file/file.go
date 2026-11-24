@@ -41,6 +41,10 @@ type ActionData struct {
 	Col    int `json:"col,omitempty"`
 	// Text: of the quickfix list.
 	Text string `json:"text,omitempty"`
+	// Preview: the lines the preview shows instead of the file (the
+	// source app: the description of the application of a desktop file).
+	// Not of ddu-kind-file.
+	Preview []string `json:"preview,omitempty"`
 }
 
 // Kind is the kind "file". Its clipboard and what undo takes back are
@@ -241,13 +245,17 @@ func isBinary(path string) bool {
 	return bytes.IndexByte(buf[:n], 0) >= 0
 }
 
-// Preview is the file (or buffer) of the item at its line.
+// Preview is the file (or buffer) of the item at its line, or the lines of
+// its Preview.
 func (Kind) Preview(_ context.Context, _ sdk.Host, a fi.PreviewArgs) (*fi.Previewer, error) {
 	ts, err := targets([]fi.Item{a.Item})
 	if err != nil || len(ts) == 0 {
 		return nil, err
 	}
 	t := ts[0]
+	if len(t.Preview) > 0 {
+		return &fi.Previewer{Kind: "nofile", Contents: t.Preview}, nil
+	}
 	if t.BufNr > 0 {
 		return &fi.Previewer{Kind: "buffer", Expr: t.BufNr, LineNr: t.LineNr}, nil
 	}

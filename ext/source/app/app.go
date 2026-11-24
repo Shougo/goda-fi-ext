@@ -46,7 +46,7 @@ func (s source) Gather(_ context.Context, _ sdk.Host, _ fi.GatherArgs, emit func
 	apps := Apps(dirs(s.getenv), locales(s.getenv), desktops(s.getenv))
 	items := make([]fi.Item, 0, len(apps))
 	for _, a := range apps {
-		items = append(items, fi.Item{Word: a.Label(), Action: file.ActionData{Path: a.Path}})
+		items = append(items, fi.Item{Word: a.Label(), Action: file.ActionData{Path: a.Path, Preview: a.Description()}})
 	}
 	return emit(items)
 }
@@ -60,6 +60,30 @@ type App struct {
 	// Name and GenericName ("Web Browser") are those of the locale.
 	Name        string
 	GenericName string
+	// Comment ("Browse the Web") and Keywords are those of the locale too.
+	Comment  string
+	Keywords []string
+	Exec     string
+}
+
+// Description is what the preview shows: the names, the comment, the
+// keywords, the command and the desktop file.
+func (a App) Description() []string {
+	lines := []string{a.Name}
+	if a.GenericName != "" && !strings.EqualFold(a.GenericName, a.Name) {
+		lines = append(lines, a.GenericName)
+	}
+	if a.Comment != "" {
+		lines = append(lines, strings.Split(a.Comment, "\n")...)
+	}
+	lines = append(lines, "")
+	if len(a.Keywords) > 0 {
+		lines = append(lines, "Keywords: "+strings.Join(a.Keywords, ", "))
+	}
+	if a.Exec != "" {
+		lines = append(lines, "Exec: "+a.Exec)
+	}
+	return append(lines, a.Path)
 }
 
 // Label is what the item shows and is matched by: the name, and the generic
@@ -165,7 +189,10 @@ func Apps(dirs, locales, desktops []string) []App {
 			e := parse(b)
 			if name, ok := e.show(locales, desktops); ok {
 				apps = append(apps, App{ID: id, Path: path, Name: name,
-					GenericName: e.localized("GenericName", locales)})
+					GenericName: e.localized("GenericName", locales),
+					Comment:     e.localized("Comment", locales),
+					Keywords:    list(e.localizedRaw("Keywords", locales)),
+					Exec:        unescape(e["Exec"])})
 			}
 			return nil
 		})
@@ -231,12 +258,17 @@ func (e entry) show(locales, desktops []string) (string, bool) {
 }
 
 func (e entry) localized(key string, locales []string) string {
+	return unescape(e.localizedRaw(key, locales))
+}
+
+// localizedRaw is the value not unescaped: that of a list is split first.
+func (e entry) localizedRaw(key string, locales []string) string {
 	for _, l := range locales {
 		if v, ok := e[key+"["+l+"]"]; ok {
-			return unescape(v)
+			return v
 		}
 	}
-	return unescape(e[key])
+	return e[key]
 }
 
 // list is a value of strings separated by ";" ("\;" is one in a string).

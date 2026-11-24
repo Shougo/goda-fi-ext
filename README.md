@@ -67,7 +67,7 @@ ext/source/register (ddu-source-register): the registers that are not empty, of 
 
 ### app
 
-ext/source/app: the applications of the desktop, as an application launcher: the desktop entries of the applications directories of the XDG data directories ($XDG_DATA_HOME/applications first; Hidden, NoDisplay, OnlyShowIn, NotShowIn and TryExec are followed), shown with their generic names, for the locale ("Firefox (Web Browser)"; "browser" finds it). Their kind is file: executeSystem with method "gio" (or "dex", "kioclient") launches them, open edits them. Linux and the BSDs: no items on MS-Windows and macOS.
+ext/source/app: the applications of the desktop, as an application launcher: the desktop entries of the applications directories of the XDG data directories ($XDG_DATA_HOME/applications first; Hidden, NoDisplay, OnlyShowIn, NotShowIn and TryExec are followed), shown with their generic names, for the locale ("Firefox (Web Browser)"; "browser" finds it). The preview describes them: their comment, keywords and command. Their kind is file: executeSystem with method "gio" (or "dex", "kioclient") launches them, open edits them. Linux and the BSDs: no items on MS-Windows and macOS.
 
 ```vim
 call goda_fi#start(#{
@@ -115,7 +115,7 @@ ext/kind/file (ddu-kind-file). Actions: open (params: command "edit",
 maxSize), append, insert, cd, execute (params: command), feedkeys, loclist,
 quickfix, yank, narrow (the directory of the item is the path of the source;
 params: path, ".." for the parent; several items: a session pushed with
-their directories). Previews files and buffers.
+their directories). Previews files and buffers, or the lines of the action data `preview` (not of ddu-kind-file) when an item has them.
 
 The actions of the filer, done by the binary, asked in Vim (`input()`,
 `confirm()`):
