@@ -65,6 +65,18 @@ ext/source/line (ddu-source-line): the lines of the buffer, from the cursor line
 
 ext/source/register (ddu-source-register): the registers that are not empty, of the kind "word".
 
+### app
+
+ext/source/app: the applications of the desktop, as an application launcher: the desktop entries of the applications directories of the XDG data directories ($XDG_DATA_HOME/applications first; Hidden, NoDisplay, OnlyShowIn, NotShowIn and TryExec are followed), named for the locale. Their kind is file: executeSystem with method "gio" (or "dex", "kioclient") launches them, open edits them. Linux and the BSDs: no items on MS-Windows and macOS.
+
+```vim
+call goda_fi#start(#{
+      \ sources: ['app'],
+      \ sourceOptions: #{app: #{defaultAction: 'executeSystem'}},
+      \ actionParams: #{executeSystem: #{method: 'gio'}},
+      \ })
+```
+
 ## Filters
 
 ### matchersubstring
@@ -119,7 +131,7 @@ The actions of the filer, done by the binary, asked in Vim (`input()`,
 | delete | (asked) |
 | trash | (asked) with kindParams trashCommand (`["gio", "trash"]`) |
 | undo | takes back the last copy, move, link, rename, newFile or newDirectory |
-| executeSystem | opens the file with the program of the system (params: method, "" for the one of the system, "nvim-open", or a command: "xdg-open", "open", "wslview", ...) |
+| executeSystem | opens the file with the program of the system (params: method, "" for the one of the system, "nvim-open", "kioclient" or "gio" for a desktop file ("kioclient exec", "gio launch"), or a command: "xdg-open", "open", "wslview", "dex", ...); the program is not stopped with Vim |
 
 The clipboard and undo are shared by the sessions; the buffers of the files
 moved, renamed or deleted follow them, and a modified one is not moved.

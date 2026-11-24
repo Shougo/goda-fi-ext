@@ -618,8 +618,9 @@ func copyPath(src, dest string) error {
 
 // executeSystem opens the files with the program of the system, as
 // ddu-kind-file's: params.method "nvim-open" (vim.ui.open()), an
-// executable ("xdg-open", "open", "wslview", ...), "windows-rundll32", or
-// "" (the one of the system).
+// executable ("xdg-open", "open", "wslview", ...), "windows-rundll32",
+// "kioclient" or "gio" (which launch desktop files: "kioclient exec" and
+// "gio launch"), or "" (the one of the system).
 func executeSystem(ctx context.Context, h sdk.Host, a fi.ActionArgs) (fi.ActionResult, error) {
 	var p struct {
 		Method string `json:"method"`
@@ -642,6 +643,8 @@ func executeSystem(ctx context.Context, h sdk.Host, a fi.ActionArgs) (fi.ActionR
 			err = start("rundll32", "url.dll,FileProtocolHandler", path)
 		case "kioclient":
 			err = start("kioclient", "exec", path)
+		case "gio":
+			err = start("gio", "launch", path)
 		default:
 			err = start(p.Method, path)
 		}
