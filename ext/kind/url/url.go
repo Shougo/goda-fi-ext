@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os/exec"
 	"runtime"
 	"slices"
 	"strings"
 
+	"github.com/Shougo/goda-fi-ext/ext/internal/detach"
 	"github.com/Shougo/goda-fi.vim/fi"
 	"github.com/Shougo/goda.vim/sdk"
 	"github.com/Shougo/goda.vim/sdk/vimscript"
@@ -131,15 +131,10 @@ func openCommand(goos, u string) (string, []string) {
 }
 
 // SystemOpen opens u with the program of the system, without waiting for
-// it.
+// it, apart from Vim.
 func SystemOpen(u string) error {
 	name, args := openCommand(runtime.GOOS, u)
-	cmd := exec.Command(name, args...)
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	go func() { _ = cmd.Wait() }()
-	return nil
+	return detach.Start(name, args...)
 }
 
 type openParams struct {

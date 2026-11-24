@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Shougo/goda-fi-ext/ext/internal/detach"
 	"github.com/Shougo/goda-fi.vim/fi"
 	"github.com/Shougo/goda.vim/sdk"
 )
@@ -669,7 +670,7 @@ func isWSL() bool {
 	return err == nil && strings.Contains(strings.ToLower(string(b)), "microsoft")
 }
 
-// start runs a program without waiting for it.
+// start runs a program without waiting for it, apart from Vim.
 func start(name string, args ...string) error {
 	var list []string
 	for _, a := range args {
@@ -677,10 +678,5 @@ func start(name string, args ...string) error {
 			list = append(list, a)
 		}
 	}
-	cmd := exec.Command(name, list...)
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	go func() { _ = cmd.Wait() }()
-	return nil
+	return detach.Start(name, list...)
 }
