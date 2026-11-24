@@ -33,9 +33,11 @@ func TestApps(t *testing.T) {
 	// An ID of a subdirectory.
 	write(t, filepath.Join(sys, "kde", "term.desktop"), head+"Name=Term\n")
 	write(t, filepath.Join(home, "kde-term.desktop"), head+"Name=Hidden Term\nNoDisplay=true\n")
-	write(t, filepath.Join(sys, "kde", "calc.desktop"), head+"Name=Calc\n")
 	// The name of the locale, escaped.
-	write(t, filepath.Join(sys, "files.desktop"), head+"Name=Files\nName[ja]=ファイル\\sマネージャー\n# Name=No\n")
+	write(t, filepath.Join(sys, "files.desktop"), head+"Name=Files\nName[ja]=ファイル\\sマネージャー\n# Name=No\n"+
+		"GenericName=File Manager\nGenericName[ja]=ファイラー\n")
+	// A generic name that says nothing more.
+	write(t, filepath.Join(sys, "kde", "calc.desktop"), head+"Name=Calc\nGenericName=calc\n")
 	// Not shown.
 	write(t, filepath.Join(sys, "link.desktop"), "[Desktop Entry]\nType=Link\nName=Link\nURL=https://example.com\n")
 	write(t, filepath.Join(sys, "only.desktop"), head+"Name=Only GNOME\nOnlyShowIn=GNOME;\n")
@@ -47,13 +49,13 @@ func TestApps(t *testing.T) {
 	write(t, filepath.Join(sys, "actions.desktop"), head+"Name=Main\n[Desktop Action new]\nName=Action\n")
 
 	got := Apps([]string{home, sys}, []string{"ja_JP", "ja"}, []string{"KDE"})
-	var names, ids []string
+	var labels, ids []string
 	for _, a := range got {
-		names = append(names, a.Name)
+		labels = append(labels, a.Label())
 		ids = append(ids, a.ID)
 	}
-	if want := []string{"Calc", "Main", "My Editor", "ファイル マネージャー"}; !reflect.DeepEqual(names, want) {
-		t.Errorf("names: got %q, want %q", names, want)
+	if want := []string{"Calc", "Main", "My Editor", "ファイル マネージャー (ファイラー)"}; !reflect.DeepEqual(labels, want) {
+		t.Errorf("labels: got %q, want %q", labels, want)
 	}
 	if want := []string{"kde-calc.desktop", "actions.desktop", "editor.desktop", "files.desktop"}; !reflect.DeepEqual(ids, want) {
 		t.Errorf("ids: got %q, want %q", ids, want)
@@ -105,10 +107,10 @@ func TestList(t *testing.T) {
 
 func TestGather(t *testing.T) {
 	home := t.TempDir()
-	write(t, filepath.Join(home, "applications", "editor.desktop"), head+"Name=Editor\n")
+	write(t, filepath.Join(home, "applications", "editor.desktop"), head+"Name=Editor\nGenericName=Text Editor\n")
 	env := map[string]string{"XDG_DATA_HOME": home, "XDG_DATA_DIRS": filepath.Join(home, "none")}
 	for goos, want := range map[string][]fi.Item{
-		"linux": {{Word: "Editor", Action: file.ActionData{Path: filepath.Join(home, "applications", "editor.desktop")}}},
+		"linux": {{Word: "Editor (Text Editor)", Action: file.ActionData{Path: filepath.Join(home, "applications", "editor.desktop")}}},
 		// No applications directories there.
 		"windows": {},
 		"darwin":  {},

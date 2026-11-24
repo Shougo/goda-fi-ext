@@ -46,7 +46,7 @@ func (s source) Gather(_ context.Context, _ sdk.Host, _ fi.GatherArgs, emit func
 	apps := Apps(dirs(s.getenv), locales(s.getenv), desktops(s.getenv))
 	items := make([]fi.Item, 0, len(apps))
 	for _, a := range apps {
-		items = append(items, fi.Item{Word: a.Name, Action: file.ActionData{Path: a.Path}})
+		items = append(items, fi.Item{Word: a.Label(), Action: file.ActionData{Path: a.Path}})
 	}
 	return emit(items)
 }
@@ -57,8 +57,18 @@ type App struct {
 	// directory, "/" made "-" ("kde-foo.desktop" for kde/foo.desktop).
 	ID   string
 	Path string
-	// Name is that of the locale.
-	Name string
+	// Name and GenericName ("Web Browser") are those of the locale.
+	Name        string
+	GenericName string
+}
+
+// Label is what the item shows and is matched by: the name, and the generic
+// name if it says more ("Firefox (Web Browser)"; matched by "browser").
+func (a App) Label() string {
+	if a.GenericName == "" || strings.EqualFold(a.GenericName, a.Name) {
+		return a.Name
+	}
+	return a.Name + " (" + a.GenericName + ")"
 }
 
 // dirs are the applications directories, the first first: an ID there
@@ -154,7 +164,8 @@ func Apps(dirs, locales, desktops []string) []App {
 			}
 			e := parse(b)
 			if name, ok := e.show(locales, desktops); ok {
-				apps = append(apps, App{ID: id, Path: path, Name: name})
+				apps = append(apps, App{ID: id, Path: path, Name: name,
+					GenericName: e.localized("GenericName", locales)})
 			}
 			return nil
 		})
